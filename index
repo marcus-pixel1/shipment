@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>运费计算比较工具 - 特斯拉用品独立站</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .recommended {
+            background-color: #e6f7ff;
+            border-left: 4px solid #1890ff;
+        }
+        .price-table td input {
+            width: 100%;
+            padding: 4px;
+            border: 1px solid transparent;
+        }
+        .price-table td input:hover {
+            border: 1px solid #d9d9d9;
+        }
+        .price-table td input:focus {
+            border: 1px solid #40a9ff;
+            outline: none;
+        }
+        @media print {
+            .no-print {
+                display: none;
+            }
+        }
+        .container {
+            max-width: 1280px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mx-auto px-4 py-6">
+        <!-- Header -->
+        <header class="mb-8">
+            <div class="flex justify-between items-center mb-6">
+                <div class="flex items-center">
+                    <i class="fas fa-shipping-fast text-3xl text-blue-600 mr-3"></i>
+                    <h1 class="text-2xl font-bold text-gray-800">运费计算比较工具</h1>
+                </div>
+                <div class="flex items-center">
+                    <span class="mr-4 text-gray-700">管理员: admin@tesla-store.com</span>
+                    <button class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-1 px-3 rounded no-print">
+                        <i class="fas fa-sign-out-alt mr-1"></i>退出
+                    </button>
+                </div>
+            </div>
+
+            <!-- Navigation Tabs -->
+            <nav class="flex border-b border-gray-200 no-print">
+                <button class="tab-btn py-2 px-4 font-medium text-blue-600 border-b-2 border-blue-600" data-tab="single-calc">单票计算</button>
+                <button class="tab-btn py-2 px-4 font-medium text-gray-600 hover:text-blue-600" data-tab="batch-calc">批量计算</button>
+                <button class="tab-btn py-2 px-4 font-medium text-gray-600 hover:text-blue-600" data-tab="price-management">价格管理</button>
+                <button class="tab-btn py-2 px-4 font-medium text-gray-600 hover:text-blue-600" data-tab="settings">系统设置</button>
+            </nav>
+        </header>
+
+        <!-- Main Content -->
+        <main>
+            <!-- Single Order Calculation Tab -->
+            <div id="single-calc" class="tab-content active">
+                <div class="flex flex-wrap -mx-4">
+                    <!-- Input Form -->
+                    <div class="w-full lg:w-1/3 px-4 mb-6">
+                        <div class="bg-white p-6 rounded-lg shadow-sm">
+                            <h2 class="text-xl font-semibold mb-4 text-gray-800">包裹信息</h2>
+                            <form id="single-order-form">
+                                <div class="mb-4">
+                                    <label class="block text-gray-700 mb-1">订单号</label>
+                                    <input type="text" class="w-full border border-gray-300 rounded px-3 py-2" placeholder="请输入订单号">
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label class="block text-gray-700 mb-1">重量 (kg)</label>
+                                    <input type="number" step="0.01" class="w-full border border-gray-300 rounded px-3 py-2" placeholder="请输入重量">
+                                </div>
+                                
+                                <div class="flex -mx-2 mb-4">
+                                    <div class="w-1/3 px-2">
+                                        <label class="block text-gray-700 mb-1">长 (cm)</label>
+                                        <input type="number" class="w-full border border-gray-300 rounded px-3 py-2" placeholder="长">
+                                    </div>
+                                    <div class="w-1/3 px-2">
+                                        <label class="block text-gray-700 mb-1">宽 (cm)</label>
+                                        <input type="number" class="w-full border border-gray-300 rounded px-3 py-2" placeholder="宽">
+                                    </div>
+                                    <div class="w-1/3 px-2">
+                                        <label class="block text-gray-700 mb-1">高 (cm)</label>
+                                        <input type="number" class="w-full border border-gray-300 rounded px-3 py-2" placeholder="高">
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label class="block text-gray-700 mb-1">目的地</label>
+                                    <select class="w-full border border-gray-300 rounded px-3 py-2">
+                                        <option value="">-- 选择州 --</option>
+                                        <option value="CA">加利福尼亚州 (CA)</option>
+                                        <option value="NY">纽约州 (NY)</option>
+                                        <option value="TX">德克萨斯州 (TX)</option>
+                                        <option value="FL">佛罗里达州 (FL)</option>
+                                        <option value="IL">伊利诺伊州 (IL)</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label class="block text-gray-700 mb-1">邮编</label>
+                                    <input type="text" class="w-full border border-gray-300 rounded px-3 py-2" placeholder="请输入邮编">
+                                </div>
+                                
+                                <button type="button" onclick="calculateSingleOrder()" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded">
+                                    <i class="fas fa-calculator mr-1"></i>计算运费
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Results Panel -->
+                    <div class="w-full lg:w-2/3 px-4">
+                        <div class="bg-white p-6 rounded-lg shadow-sm">
+                            <div class="flex justify-between items-center mb-4">
+                                <h2 class="text-xl font-semibold text-gray-800">运费比较结果</h2>
+                                <div>
+                                    <button class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-1 px-3 rounded mr-2 no-print">
+                                        <i class="fas fa-file-excel mr-1"></i>导出Excel
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full bg-white">
+                                    <thead>
+                                        <tr class="bg-gray-100 text-gray-700">
+                                            <th class="py-2 px-4 text-left">渠道</th>
+                                            <th class="py-2 px-4 text-left">线路</th>
+                                            <th class="py-2 px-4 text-left">时效</th>
+                                            <th class="py-2 px-4 text-right">首重(¥)</th>
+                                            <th class="py-2 px-4 text-right">续重(¥)</th>
+                                            <th class="py-2 px-4 text-right">操作费(¥)</th>
+                                            <th class="py-2 px-4 text-right">总费用(¥)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="recommended">
+                                            <td class="py-3 px-4 border-t">
+                                                <span class="flex items-center">
+                                                    <i class="fas fa-crown text-yellow-500 mr-1"></i>
+                                                    燕文
+                                                </span>
+                                            </td>
+                                            <td class="py-3 px-4 border-t">特惠专线</td>
+                                            <td class="py-3 px-4 border-t">8-12天</td>
+                                            <td class="py-3 px-4 border-t text-right">76.00</td>
+                                            <td class="py-3 px-4 border-t text-right">34.00</td>
+                                            <td class="py-3 px-4 border-t text-right">10.00</td>
+                                            <td class="py-3 px-4 border-t text-right font-medium">120.00</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-3 px-4 border-t">云图</td>
+                                            <td class="py-3 px-4 border-t">标准专线</td>
+                                            <td class="py-3 px-4 border-t">9-14天</td>
+                                            <td class="py-3 px-4 border-t text-right">78.00</td>
+                                            <td class="py-3 px-4 border-t text-right">35.00</td>
+                                            <td class="py-3 px-4 border-t text-right">12.00</td>
+                                            <td class="py-3 px-4 border-t text-right font-medium">125.00</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-3 px-4 border-t">三泰</td>
+                                            <td class="py-3 px-4 border-t">快速专线</td>
+                                            <td class="py-3 px-4 border-t">7-10天</td>
+                                            <td class="py-3 px-4 border-t text-right">84.00</td>
+                                            <td class="py-3 px-4 border-t text-right">36.00</td>
+                                            <td class="py-3 px-4 border-t text-right">12.00</td>
+                                            <td class="py-3 px-4 border-t text-right font-medium">132.00</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-3 px-4 border-t">美国海外仓</td>
+                                            <td class="py-3 px-4 border-t">本土派送</td>
+                                            <td class="py-3 px-4 border-t">2-3天</td>
+                                            <td class="py-3 px-4 border-t text-right">95.00</td>
+                                            <td class="py-3 px-4 border-t text-right">40.00</td>
+                                            <td class="py-3 px-4 border-t text-right">15.00</td>
+                                            <td class="py-3 px-4 border-t text-right font-medium">150.00</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div class="mt-6">
+                                <h3 class="text-lg font-medium text-gray-800 mb-2">计算详情</h3>
+                                <div class="bg-gray-50 p-4 rounded border">
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <p class="text-sm text-gray-600">包裹信息</p>
+                                            <p class="font-medium">重量: 2.5 kg</p>
+                                            <p class="font-medium">尺寸: 30 × 25 × 20 cm</p>
+                                            <p class="font-medium">体积重: 3.0 kg</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm text-gray-600">目的地</p>
+                                            <p class="font-medium">加利福尼亚州 (CA)</p>
+                                            <p class="font-medium">邮编: 90001</p>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3">
+                                        <p class="text-sm text-gray-600">计算说明</p>
+                                        <p>采用实际重量与体积重中较大者: <strong>3.0 kg</strong></p>
+                                        <p>燕文特惠专线: 首重76元 + 续重(2.0kg × 34元) + 操作费10元 = <strong>120元</strong></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Recent Calculations -->
+                        <div class="bg-white p-6 rounded-lg shadow-sm mt-6">
+                            <h2 class="text-xl font-semibold mb-4 text-gray-800">最近计算记录</h2>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full bg-white">
+                                    <thead>
+                                        <tr class="bg-gray-100 text-gray-700">
+                                            <th class="py-2 px-4 text-left">订单号</th>
+                                            <th class="py-2 px-4 text-left">时间</th>
+                                            <th class="py-2 px-4 text-left">重量</th>
+                                            <th class="py-2 px-4 text-left">目的地</th>
+                                            <th class="py-2 px-4 text-left">推荐渠道</th>
+                                            <th class="py-2 px-4 text-right">费用</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td class="py-2 px-4 border-t">TS20230715-001</td>
+                                            <td class="py-2 px-4 border-t">2023-07-15 14:30</td>
+                                            <td class="py-2 px-4 border-t">3.0 kg</td>
+                                            <td class="py-2 px-4 border-t">CA 90001</td>
+                                            <td class="py-2 px-4 border-t">燕文-特惠专线</td>
+                                            <td class="py-2 px-4 border-t text-right">¥120.00</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-2 px-4 border-t">TS20230715-002</td>
+                                            <td class="py-2 px-4 border-t">2023-07-15 14:22</td>
+                                            <td class="py-2 px-4 border-t">1.5 kg</td>
+                                            <td class="py-2 px-4 border-t">NY 10001</td>
+                                            <td class="py-2 px-4 border-t">云图-标准专线</td>
+                                            <td class="py-2 px-4 border-t text-right">¥88.00</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-2 px-4 border-t">TS20230715-003</td>
+                                            <td class="py-2 px-4 border-t">2023-07-15 13:58</td>
+                                            <td class="py-2 px-4 border-t">4.2 kg</td>
+                                            <td class="py-2 px-4 border-t">TX 75001</td>
+                                            <td class="py-2 px-4 border-t">三泰-快速专线</td>
+                                            <td class="py-2 px-4 border-t text-right">¥165.00</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Batch Import Tab -->
+            <div id="batch-calc" class="tab-content">
+                <div class="bg-white p-6 rounded-lg shadow-sm mb-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-semibold text-gray-800">批量运费计算</h2>
+                        <div>
+                            <a href="#" class="text-blue-600 hover:text-blue-800 font-medium mr-4">
+                                <i class="fas fa-download mr-1"></i>下载Excel模板
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center mb-6">
+                        <i class="fas fa-file-upload text-gray-400 text-4xl mb-3"></i>
+                        <p class="text-gray-600 mb-3">拖拽Excel文件到此处，或点击上传</p>
+                        <input type="file" id="batch-file" class="hidden" accept=".xlsx,.xls,.csv">
+                        <button onclick="document.getElementById('batch-file').click()" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded">
+                            选择文件上传
+                        </button>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                            <div class="bg-blue-600 h-2.5 rounded-full" style="width: 70%"></div>
+                        </div>
+                        <div class="flex justify-between text-sm mt-1">
+                            <span>正在处理: 70%</span>
+                            <span>70/100 条记录</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-semibold text-gray-800">批量计算结果</h2>
+                        <div>
+                            <button class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-1 px-3 rounded mr-2 no-print">
+                                <i class="fas fa-file-excel mr-1"></i>导出结果
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full bg-white">
+                            <thead>
+                                <tr class="bg-gray-100 text-gray-700">
+                                    <th class="py-2 px-3 text-left">订单号</th>
+                                    <th class="py-2 px-3 text-left">重量(kg)</th>
+                                    <th class="py-2 px-3 text-left">尺寸(cm)</th>
+                                    <th class="py-2 px-3 text-left">目的地</th>
+                                    <th class="py-2 px-3 text-left">推荐渠道</th>
+                                    <th class="py-2 px-3 text-right">费用(¥)</th>
+                                    <th class="py-2 px-3 text-center">详情</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="py-2 px-3 border-t">TS20230716-001</td>
+                                    <td class="py-2 px-3 border-t">1.8</td>
+                                    <td class="py-2 px-3 border-t">25×20×15</td>
+                                    <td class="py-2 px-3 border-t">CA 92101</td>
+                                    <td class="py-2 px-3 border-t">
+                                        <span class="flex items-center">
+                                            <i class="fas fa-crown text-yellow-500 mr-1"></i>
+                                            燕文-特惠专线
+                                        </span>
+                                    </td>
+                                    <td class="py-2 px-3 border-t text-right">92.00</td>
+                                    <td class="py-2 px-3 border-t text-center">
+                                        <button class="text-blue-600 hover:text-blue-800">
+                                            <i class="fas fa-info-circle"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2 px-3 border-t">TS20230716-002</td>
+                                    <td class="py-2 px-3 border-t">3.2</td>
+                                    <td class="py-2 px-3 border-t">30×25×20</td>
+                                    <td class="py-2 px-3 border-t">NY 10001</td>
+                                    <td class="py-2 px-3 border-t">
+                                        <span class="flex items-center">
+                                            <i class="fas fa-crown text-yellow-500 mr-1"></i>
+                                            三泰-快速专线
+                                        </span>
+                                    </td>
+                                    <td class="py-2 px-3 border-t text-right">136.00</td>
+                                    <td class="py-2 px-3 border-t text-center">
+                                        <button class="text-blue-600 hover:text-blue-800">
+                                            <i class="fas fa-info-circle"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2 px-3 border-t">TS20230716-003</td>
+                                    <td class="py-2 px-3 border-t">0.8</td>
+                                    <td class="py-2 px-3 border-t">15×12×10</td>
+                                    <td class="py-2 px-3 border-t">TX 75001</td>
+                                    <td class="py-2 px-3 border-t">
+                                        <span class="flex items-center">
+                                            <i class="fas fa-crown text-yellow-500 mr-1"></i>
+                                            云图-标准专线
+                                        </span>
+                                    </td>
+                                    <td class="py-2 px-3 border-t text-right">78.00</td>
+                                    <td class="py-2 px-3 border-t text-center">
+                                        <button class="text-blue-600 hover:text-blue-800">
+                                            <i class="fas fa-info-circle"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2 px-3 border-t">TS20230716-004</td>
+                                    <td class="py-2 px-3 border-t">5.5</td>
+                                    <td class="py-2 px-3 border-t">40×35×30</td>
+                                    <td class="py-2 px-3 border-t">FL 33101</td>
+                                    <td class="py-2 px-3 border-t">
+                                        <span class="flex items-center">
+                                            <i class="fas fa-crown text-yellow-500 mr-1"></i>
+                                            美国海外仓-本土派送
+                                        </span>
+                                    </td>
+                                    <td class="py-2 px-3 border-t text-right">185.00</td>
+                                    <td class="py-2 px-3 border-t text-center">
+                                        <button class="text-blue-600 hover:text-blue-800">
+                                            <i class="fas fa-info-circle"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2 px-3 border-t">TS20230716-005</td>
+                                    <td class="py-2 px-3 border-t">2.3</td>
+                                    <td class="py-2 px-3 border-t">28×22×18</td>
+                                    <td class="py-2 px-3 border-t">IL 60007</td>
+                                    <td class="py-2 px-3 border-t">
+                                        <span class="flex items-center">
+                                            <i class="fas fa-crown text-yellow-500 mr-1"></i>
+                                            燕文-特惠专线
+                                        </span>
+                                    </td>
+                                    <td class="py-2 px-3 border-t text-right">110.00</td>
+                                    <td class="py-2 px-3 border-t text-center">
+                                        <button class="text-blue-600 hover:text-blue-800">
+                                            <i class="fas fa-info-circle"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="mt-4 flex justify-between items-center">
+                        <div class="text-gray-600">
+                            显示 1 至 5 条，共 100 条记录
+                        </div>
+                        <div class="flex">
+                            <button class="bg-gray-200 hover:bg-gray-300 text-gray-600 font-medium py-1 px-3 rounded-l">上一页</button>
+                            <button class="bg-blue-600 text-white font-medium py-1 px-3">1</button>
+                            <button class="bg-gray-200 hover:bg-gray-300 text-gray-600 font-medium py-1 px-3">2</button>
+                            <button class="bg-gray-200 hover:bg-gray-300 text-gray-600 font-medium py-1 px-3">3</button>
+                            <button class="bg-gray-200 hover:bg-gray-300 text-gray-600 font-medium py-1 px-3 rounded-r">下一页</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Price Management Tab -->
+            <div id="price-management" class="tab-content">
+                <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-semibold text-gray-800">价格管理</h2>
+                        <div>
+                            <button class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-1 px-3 rounded mr-2 no-print">
+                                <i class="fas fa-file-import mr-1"></i>导入价格表
+                            </button>
+                            <button class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-1 px-3 rounded mr-2 no-print">
+                                <i class="fas fa-file-export mr-1"></i>导出价格表
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="flex mb-4">
+                        <div class="w-1/4 mr-4">
+                            <label class="block text-gray-700 mb-1">渠道选择</label>
+                            <select class="w-full border border-gray-300 rounded px-3 py-2">
+                                <option value="yanwen">燕文</option>
+                                <option value="yuntu">云图</option>
+                                <option value="santai">三泰</option>
+                                <option value="overseas">美国海外仓</option>
+                            </select>
+                        </div>
+                        <div class="w-1/4 mr-4">
+                            <label class="block text-gray-700 mb-1">线路选择</label>
+                            <select class="w-full border border-gray-300 rounded px-3 py-2">
+                                <option value="economic">特惠专线</option>
+                                <option value="standard">标准专线</option>
+                                <option value="express">快速专线</option>
+                            </select>
+                        </div>
+                        <div class="w-1/4">
+                            <label class="block text-gray-700 mb-1">生效日期</label>
+                            <input type="date" class="w-full border border-gray-300 rounded px-3 py-2" value="2023-07-16">
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto mb-4">
+                        <table class="min-w-full bg-white price-table">
+                            <thead>
+                                <tr class="bg-gray-100 text-gray-700">
+                                    <th class="py-2 px-3 text-left">重量区间(kg)</th>
+                                    <th class="py-2 px-3 text-left">首重价格(¥)</th>
+                                    <th class="py-2 px-3 text-left">续重价格(¥/kg)</th>
+                                    <th class="py-2 px-3 text-left">操作费(¥)</th>
+                                    <th class="py-2 px-3 text-left">特殊区域附加费(¥)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="py-2 px-3 border-t">0.0 - 0.5</td>
+                                    <td class="py-2 px-3 border-t"><input type="number" value="58.00"></td>
+                                    <td class="py-2 px-3 border-t"><input type="number" value="0.00"></td>
+                                    <td class="py-2 px-3 border-t"><input type="number" value="5.00"></td>
+                                    <td class="py-2 px-3 border-t"><input type="number" value="0.00"></td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2 px-3 border-t">0.5 - 1.0</td>
+                                    <td class="py-2 px-3 border-t"><input type="number" value="76.00"></td>
+                                    <td class="py-2 px-3 border-t"><input type="number" value="0.00"></td>
+                                    <td class="py-2 px-3 border-t"><input type="number" value="10.00"></td>
+                                    <td class="py-2 px-3 border-t"><input type="number" value="0.00"></td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2 px-3 border-t">1.0 - 2.0</td>
+                                    <td class="py-2 px-3 border-t"><input type="number" value="76.00"></td>
+                                    <td class="py-2 px-3 border-t"><input type="number" value="34.00"></td>
+                                    <td class="py-2 px-3 border-t"><input type="number" value="10.00"></td>
+                                    <td class="py-2 px-3 border-t"><input type="number" value="5.00"></td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2 px-3 border-t">2.0 - 5.0</td>
+                                    <td class="py-2 px-3 border-t"><input type="number" value="76.00"></td>
+                                    <td class="py-2 px-3 border-t"><input type="number" value="34.00"></td>
+                                    <td class="py-2 px-3 border-t"><input type="number" value="10.00"></td>
+                                    <td class="py-2 px-3 border-t"><input type="number" value="5.00"></td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2 px-3 border-t">5.0 - 10.0</td>
+                                    <td class="py-2 px-3 border-t"><input type="number" value="76.00"></td>
+                                    <td class="py-2 px-3 border-t"><input type="number" value="32.00"></td>
+                                    <td class="py-2 px-3 border-t"><input type="number" value="15.00"></td>
+                                    <td class="py-2 px-3 border-t"><input type="number" value="10.00"></td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2 px-3 border-t">10.0以上</td>
+                                    <td class="py-2 px-3 border-t"><input type="number" value="76.00"></td>
+                                    <td class="py-2 px-3 border-t"><input type="number" value="30.00"></td>
+                                    <td class="py-2 px-3 border-t"><input type="number" value="20.00"></td>
+                                    <td class="py-2 px-3 border-t"><input type="number" value="15.00"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="flex justify-between mt-6">
+                        <div>
+                            <button class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded mr-2">
+                                <i class="fas fa-plus mr-1"></i>添加价格区间
+                            </button>
+                        </div>
+                        <div>
+                            <button class="bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 font-medium py-2 px-4 rounded mr-2">
+                                取消
+                            </button>
+                            <button class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded">
+                                保存更新
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-6 rounded-lg shadow-sm mt-6">
+                    <h2 class="text-xl font-semibold mb-4 text-gray-800">价格更新历史</h2>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full bg-white">
+                            <thead>
+                                <tr class="bg-gray-100 text-gray-700">
+                                    <th class="py-2 px-4 text-left">更新时间</th>
+                                    <th class="py-2 px-4 text-left">渠道</th>
+                                    <th class="py-2 px-4 text-left">线路</th>
+                                    <th class="py-2 px-4 text-left">更新人</th>
+                                    <th class="py-2 px-4 text-left">状态</th>
+                                    <th class="py-2 px-4 text-left">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="py-2 px-4 border-t">2023-07-15 09:30</td>
+                                    <td class="py-2 px-4 border-t">燕文</td>
+                                    <td class="py-2 px-4 border-t">特惠专线</td>
+                                    <td class="py-2 px-4 border-t">admin@tesla-store.com</td>
+                                    <td class="py-2 px-4 border-t">
+                                        <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">生效中</span>
+                                    </td>
+                                    <td class="py-2 px-4 border-t">
+                                        <a href="#" class="text-blue-600 hover:text-blue-800 mr-3">查看</a>
+                                        <a href="#" class="text-gray-600 hover:text-gray-800">复制</a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2 px-4 border-t">2023-07-10 15:45</td>
+                                    <td class="py-2 px-4 border-t">云图</td>
+                                    <td class="py-2 px-4 border-t">标准专线</td>
+                                    <td class="py-2 px-4 border-t">admin@tesla-store.com</td>
+                                    <td class="py-2 px-4 border-t">
+                                        <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">生效中</span>
+                                    </td>
+                                    <td class="py-2 px-4 border-t">
+                                        <a href="#" class="text-blue-600 hover:text-blue-800 mr-3">查看</a>
+                                        <a href="#" class="text-gray-600 hover:text-gray-800">复制</a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2 px-4 border-t">2023-06-25 11:20</td>
+                                    <td class="py-2 px-4 border-t">燕文</td>
+                                    <td class="py-2 px-4 border-t">特惠专线</td>
+                                    <td class="py-2 px-4 border-t">manager@tesla-store.com</td>
+                                    <td class="py-2 px-4 border-t">
+                                        <span class="px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded-full">已过期</span>
+                                    </td>
+                                    <td class="py-2 px-4 border-t">
+                                        <a href="#" class="text-blue-600 hover:text-blue-800 mr-3">查看</a>
+                                        <a href="#" class="text-gray-600 hover:text-gray-800">复制</a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Settings Tab -->
+            <div id="settings" class="tab-content">
+                <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <h2 class="text-xl font-semibold mb-6 text-gray-800">系统设置</h2>
+                    
+                    <div class="flex flex-wrap -mx-4">
+                        <!-- User Management -->
+                        <div class="w-full lg:w-1/2 px-4 mb-6">
+                            <h3 class="text-lg font-medium mb-3 text-gray-800">用户管理</h3>
+                            <div class="border rounded">
+                                <div class="p-3 border-b bg-gray-50 flex justify-between items-center">
+                                    <span class="font-medium text-gray-700">用户列表</span>
+                                    <button class="text-blue-600 hover:text-blue-800">
+                                        <i class="fas fa-plus mr-1"></i>添加用户
+                                    </button>
+                                </div>
+                                <div class="p-3">
+                                    <div class="flex justify-between items-center py-2 border-b">
+                                        <div>
+                                            <p class="font-medium">admin@tesla-store.com</p>
+                                            <p class="text-gray-600 text-sm">管理员</p>
+                                        </div>
+                                        <div>
+                                            <button class="text-blue-600 hover:text-blue-800 mr-2">编辑</button>
+                                            <button class="text-red-600 hover:text-red-800">删除</button>
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-between items-center py-2 border-b">
+                                        <div>
+                                            <p class="font-medium">operator1@tesla-store.com</p>
+                                            <p class="text-gray-600 text-sm">操作员</p>
+                                        </div>
+                                        <div>
+                                            <button class="text-blue-600 hover:text-blue-800 mr-2">编辑</button>
+                                            <button class="text-red-600 hover:text-red-800">删除</button>
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-between items-center py-2">
+                                        <div>
+                                            <p class="font-medium">operator2@tesla-store.com</p>
+                                            <p class="text-gray-600 text-sm">操作员</p>
+                                        </div>
+                                        <div>
+                                            <button class="text-blue-600 hover:text-blue-800 mr-2">编辑</button>
+                                            <button class="text-red-600 hover:text-red-800">删除</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Channel Management -->
+                        <div class="w-full lg:w-1/2 px-4 mb-6">
+                            <h3 class="text-lg font-medium mb-3 text-gray-800">渠道管理</h3>
+                            <div class="border rounded">
+                                <div class="p-3 border-b bg-gray-50 flex justify-between items-center">
+                                    <span class="font-medium text-gray-700">渠道列表</span>
+                                    <button class="text-blue-600 hover:text-blue-800">
+                                        <i class="fas fa-plus mr-1"></i>添加渠道
+                                    </button>
+                                </div>
+                                <div class="p-3">
+                                    <div class="flex justify-between items-center py-2 border-b">
+                                        <div>
+                                            <p class="font-medium">燕文</p>
+                                            <p class="text-gray-600 text-sm">特惠专线, 标准专线</p>
+                                        </div>
+                                        <div>
+                                            <button class="text-blue-600 hover:text-blue-800 mr-2">编辑</button>
+                                            <button class="text-gray-600 hover:text-gray-800">
+                                                <i class="fas fa-toggle-on text-green-600"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-between items-center py-2 border-b">
+                                        <div>
+                                            <p class="font-medium">云图</p>
+                                            <p class="text-gray-600 text-sm">标准专线, 快速专线</p>
+                                        </div>
+                                        <div>
+                                            <button class="text-blue-600 hover:text-blue-800 mr-2">编辑</button>
+                                            <button class="text-gray-600 hover:text-gray-800">
+                                                <i class="fas fa-toggle-on text-green-600"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-between items-center py-2 border-b">
+                                        <div>
+                                            <p class="font-medium">三泰</p>
+                                            <p class="text-gray-600 text-sm">快速专线, 优惠专线</p>
+                                        </div>
+                                        <div>
+                                            <button class="text-blue-600 hover:text-blue-800 mr-2">编辑</button>
+                                            <button class="text-gray-600 hover:text-gray-800">
+                                                <i class="fas fa-toggle-on text-green-600"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-between items-center py-2">
+                                        <div>
+                                            <p class="font-medium">美国海外仓</p>
+                                            <p class="text-gray-600 text-sm">本土派送</p>
+                                        </div>
+                                        <div>
+                                            <button class="text-blue-600 hover:text-blue-800 mr-2">编辑</button>
+                                            <button class="text-gray-600 hover:text-gray-800">
+                                                <i class="fas fa-toggle-on text-green-600"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- General Settings -->
+                        <div class="w-full px-4">
+                            <h3 class="text-lg font-medium mb-3 text-gray-800">基本设置</h3>
+                            <div class="border rounded p-4">
+                                <div class="mb-4">
+                                    <label class="block text-gray-700 mb-1">默认汇率 (USD:CNY)</label>
+                                    <input type="number" step="0.001" class="w-full border border-gray-300 rounded px-3 py-2" value="7.182">
+                                </div>
+                                <div class="mb-4">
+                                    <label class="block text-gray-700 mb-1">体积重系数 (kg/m³)</label>
+                                    <input type="number" step="0.1" class="w-full border border-gray-300 rounded px-3 py-2" value="167">
+                                    <p class="text-sm text-gray-600 mt-1">计算公式: 长(cm) × 宽(cm) × 高(cm) ÷ 体积重系数 = 体积重(kg)</p>
+                                </div>
+                                <div class="mb-4">
+                                    <label class="block text-gray-700 mb-2">运费比较优先级</label>
+                                    <div class="flex items-center mb-2">
+                                        <input type="radio" id="price-first" name="priority" checked class="mr-2">
+                                        <label for="price-first">价格优先</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="radio" id="delivery-first" name="priority" class="mr-2">
+                                        <label for="delivery-first">时效优先</label>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex justify-end mt-4">
+                                    <button class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded">
+                                        保存设置
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <footer class="mt-8 text-center text-gray-600 text-sm py-4">
+            <p>© 2023 特斯拉用品独立站 - 运费计算比较工具</p>
+        </footer>
+    </div>
+    
+    <script>
+        // Tab switching functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const tabButtons = document.querySelectorAll('.tab-btn');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            tabButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // Remove active class from all buttons
+                    tabButtons.forEach(btn => {
+                        btn.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600');
+                        btn.classList.add('text-gray-600');
+                    });
+                    
+                    // Add active class to current button
+                    this.classList.remove('text-gray-600');
+                    this.classList.add('text-blue-600', 'border-b-2', 'border-blue-600');
+                    
+                    // Hide all tab contents
+                    tabContents.forEach(content => {
+                        content.classList.remove('active');
+                    });
+                    
+                    // Show current tab content
+                    const tabId = this.getAttribute('data-tab');
+                    document.getElementById(tabId).classList.add('active');
+                });
+            });
+        });
+        
+        // Mock function to simulate calculation
+        function calculateSingleOrder() {
+            // In a real application, this would perform actual calculations
+            alert('计算功能已触发，实际应用中会执行运费计算');
+        }
+    </script>
+</body>
+</html>
